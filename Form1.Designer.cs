@@ -33,16 +33,17 @@
             textBox = new TextBox();
             numericUpDown = new NumericUpDown();
             but_start = new Button();
+            but_send = new Button();
             ((System.ComponentModel.ISupportInitialize)numericUpDown).BeginInit();
             SuspendLayout();
             // 
             // but_stop
             // 
-            but_stop.Location = new Point(596, 404);
+            but_stop.Location = new Point(691, 404);
             but_stop.Name = "but_stop";
             but_stop.Size = new Size(150, 46);
             but_stop.TabIndex = 1;
-            but_stop.Text = "Стоп";
+            but_stop.Text = "Stop";
             but_stop.UseVisualStyleBackColor = true;
             but_stop.Click += but_stop_Click;
             // 
@@ -74,15 +75,25 @@
             but_start.Name = "but_start";
             but_start.Size = new Size(150, 46);
             but_start.TabIndex = 5;
-            but_start.Text = "Старт";
+            but_start.Text = "Start";
             but_start.UseVisualStyleBackColor = true;
             but_start.Click += but_start_Click;
+            // 
+            // but_send
+            // 
+            but_send.Location = new Point(453, 404);
+            but_send.Name = "but_send";
+            but_send.Size = new Size(150, 46);
+            but_send.TabIndex = 6;
+            but_send.Text = "Send";
+            but_send.UseVisualStyleBackColor = true;
             // 
             // Form1
             // 
             AutoScaleDimensions = new SizeF(13F, 32F);
             AutoScaleMode = AutoScaleMode.Font;
             ClientSize = new Size(1062, 618);
+            Controls.Add(but_send);
             Controls.Add(but_start);
             Controls.Add(numericUpDown);
             Controls.Add(textBox);
@@ -104,5 +115,6 @@
         private TextBox textBox;
         private NumericUpDown numericUpDown;
         private Button but_start;
+        private Button but_send;
     }
 }

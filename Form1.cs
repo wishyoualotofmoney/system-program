@@ -15,66 +15,50 @@ namespace gazizov_lb_1_system
     public partial class Form1 : Form
     {
 
-        // Объявление переменной для хранения процесса
-        Process ConsoleAppProcess = null;
-
-        // Создание объектов событий для синхронизации потоков
-        // EventStart - событие для запуска процесса
-        EventWaitHandle EventStart = new EventWaitHandle(false, EventResetMode.AutoReset, "EventStart");
-
-        // EventStop - событие для остановки процесса
-        EventWaitHandle EventStop = new EventWaitHandle(false, EventResetMode.AutoReset, "EventStop");
-
-        // EventOK - событие для сигнализации успешного выполнения операции
-        EventWaitHandle EventOK = new EventWaitHandle(false, EventResetMode.AutoReset, "EventOK");
-
-        // EventCloseDialogApp - событие для закрытия диалога/приложения 
-        EventWaitHandle EventCloseDialogApp = new EventWaitHandle(false, EventResetMode.AutoReset, "EventCloseDialogApp");
-
-        // Переменная для отслеживания количества созданных потоков
-        int threadcount = 0;
         public Form1()
         {
             InitializeComponent();
         }
 
+        EventWaitHandle EventStart = new EventWaitHandle(false, EventResetMode.AutoReset, "GazizovEventStart");
+        EventWaitHandle EventStop = new EventWaitHandle(false, EventResetMode.AutoReset, "GazizovEventStop");
+        EventWaitHandle EventQuit = new EventWaitHandle(false, EventResetMode.AutoReset, "GazizovEventQuit");
+        EventWaitHandle EventConfirm = new EventWaitHandle(false, EventResetMode.AutoReset, "GazizovEventConfirm");
+        Process ChildProcess = null;
+
+        // Проверка на наличие процесса
+        private Boolean ConsoleIsOpen()
+        {
+            if (ChildProcess == null || ChildProcess.HasExited)
+            {
+                listBox.Items.Clear();
+                NoMainThread();
+                return false;
+            }
+            return true;
+        }
+
         private void but_start_Click(object sender, EventArgs e)
         {
-            // Проверяем, что процесс не запущен или уже завершен
-            if (ConsoleAppProcess == null || ConsoleAppProcess.HasExited)
+            //int addNum = Int32.Parse(TextBox1.Text);
+            int addNum = Convert.ToInt32(Math.Round(numericUpDown.Value, 0));
+            for (int i = 0; i < addNum; ++i)
             {
-                // Если процесс не запущен или уже завершен, то сбрасываем счетчик потоков и очищаем элементы в listBox
-                threadcount = 0;
-                listBox.Items.Clear();
-
-                // Запускаем процесс
-                ConsoleAppProcess = Process.Start("C:/projects/gazizov_lb_1_system/Debug/gazizov_lb_1.exe");
-
-                // Добавляем сообщение о главном потоке в listBox
-                listBox.Items.Add("Главный поток");
-
-                // Обновляем текстовое поле счетчика потоков
-                textBox.Text = threadcount.ToString();
-            }
-            else
-            {
-                // Если процесс уже запущен, то создаем новые потоки в количестве, указанном в numericUpDown
-                for (int i = 0; i < numericUpDown.Value; i++)
+                if (ConsoleIsOpen())
                 {
-                    // Устанавливаем событие запуска нового потока
                     EventStart.Set();
+                    EventConfirm.WaitOne();
 
-                    // Ожидаем сигнала об успешном выполнении операции
-                    EventOK.WaitOne();
+                    listBox.Items.Add("Поток " + (listBox.Items.Count - 1).ToString());
+                }
+                else
+                {
+                    ChildProcess = Process.Start("C:\\projects\\gazizov_lb_1_system\\Debug\\gazizov_lb_1.exe");
 
-                    // Увеличиваем счетчик потоков
-                    threadcount++;
-
-                    // Добавляем информацию о новом потоке в listBox
-                    listBox.Items.Add("Поток " + threadcount.ToString());
-
-                    // Обновляем текстовое поле счетчика потоков
-                    textBox.Text = threadcount.ToString();
+                    listBox.Items.Clear();
+                    listBox.Items.Add("Все потоки");
+                    listBox.Items.Add("Главный поток");
+                    break;
                 }
             }
         }
@@ -82,52 +66,53 @@ namespace gazizov_lb_1_system
 
         private void but_stop_Click(object sender, EventArgs e)
         {
-            // Проверяем, что процесс запущен и не завершен
-            if (!(ConsoleAppProcess == null || ConsoleAppProcess.HasExited))
-            {
-                // Если есть запущенные потоки
-                if (threadcount != 0)
-                {
-                    // Отправляем сигнал остановки потока
-                    EventStop.Set();
+            if (!ConsoleIsOpen())
+                return;
 
-                    // Ожидаем сигнала об успешном завершении операции
-                    EventOK.WaitOne();
+            EventStop.Set();
+            EventConfirm.WaitOne();
 
-                    // Уменьшаем счетчик потоков
-                    threadcount--;
-
-                    // Удаляем информацию о завершенном потоке из listBox
-                    listBox.Items.Remove("Поток " + (threadcount + 1).ToString());
-
-                    // Обновляем текстовое поле счетчика потоков
-                    textBox.Text = threadcount.ToString();
-                }
-                else
-                {
-                    // Если нет запущенных потоков, то отправляем сигнал закрытия диалога приложения и закрываем приложение
-                    EventCloseDialogApp.Set();
-                    this.Close();
-                }
-            }
-            else
-            {
-                // Если процесс не запущен или уже завершен, то отправляем сигнал закрытия диалога приложения и закрываем приложение
-                EventCloseDialogApp.Set();
-                this.Close();
-            }
+            listBox.Items.RemoveAt(listBox.Items.Count - 1);
+            if (listBox.Items.Count == 1)
+                NoMainThread();
         }
 
-
-        private void Form1_FormClosed(object sender, FormClosedEventArgs e)
+        private void NoMainThread()
         {
-            EventCloseDialogApp.Set();
-            return;
+            listBox.Items.Clear();
+            listBox.Items.Add("Нет запущенных потоков");
         }
-        
+
+
         private void Form1_Load(object sender, EventArgs e)
         {
-
+            NoMainThread();
+            numericUpDown.Value = 1;
+            //TextBox1.SelectedText = "1";
         }
+
+        private void Form1_Closed(object sender, FormClosedEventArgs e)
+        {
+            if (!ConsoleIsOpen())
+                return;
+
+            EventQuit.Set();
+            EventConfirm.WaitOne();
+        }
+       /* private void NumThreadKeyPress(object sender, KeyPressEventArgs e)
+        {
+            if (!char.IsControl(e.KeyChar) && !char.IsDigit(e.KeyChar) &&
+                (e.KeyChar != '.'))
+            {
+                e.Handled = true;
+            }
+
+            // Only allow one decimal point
+            if ((e.KeyChar == '.') && ((sender as TextBox).Text.IndexOf('.') > -1))
+            {
+                e.Handled = true;
+            }
+        }*/
+
     }
 }

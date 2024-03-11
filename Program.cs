@@ -13,4 +13,10 @@ namespace gazizov_lb_1_system
             Application.Run(new Form1());
         }
     }
+
+
+
+
+
+
 }
